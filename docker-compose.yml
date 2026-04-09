@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: odds_user
+      POSTGRES_PASSWORD: odds_password
+      POSTGRES_DB: odds_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odds_user -d odds_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  python-service:
+    build: ./python-service
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=odds_user
+      - DB_PASS=odds_password
+      - DB_NAME=odds_platform
+      - JWT_SECRET=super_secret_neon_key_123
+      - PYTHON_SERVICE_URL=http://python-service:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      python-service:
+        condition: service_started
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:5000/api
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
