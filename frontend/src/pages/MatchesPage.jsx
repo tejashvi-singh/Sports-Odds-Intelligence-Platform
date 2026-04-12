@@ -10,6 +10,7 @@ const MatchesPage = () => {
   // Using pseudo-auth for favorites in this demo
   const [favorites, setFavorites] = useState([]);
   const [selectedMatchForChat, setSelectedMatchForChat] = useState(null);
+  const [filter, setFilter] = useState('all'); // 'all' or 'favorites'
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -58,11 +59,31 @@ const MatchesPage = () => {
         {loading ? (
           <div className="flex flex-col items-center justify-center h-64 gap-4">
             <div className="w-12 h-12 border-4 border-surface border-t-primary rounded-full animate-spin"></div>
-            <p className="text-textMuted tracking-widest uppercase text-sm">Initializing Models...</p>
+            <p className="text-textMuted tracking-widest uppercase text-sm animate-pulse">Initializing Models...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {matches.map(match => (
+          <>
+            <div className="mb-6 flex gap-4">
+              <button 
+                onClick={() => setFilter('all')}
+                className={`px-6 py-2 rounded-full text-sm font-bold tracking-wider transition-all duration-300 ${filter === 'all' ? 'bg-primary text-black shadow-[0_0_15px_rgba(57,255,20,0.4)]' : 'bg-surface text-textMuted border border-border hover:border-primary/50'}`}
+              >
+                ALL MATCHES
+              </button>
+              <button 
+                onClick={() => setFilter('favorites')}
+                className={`px-6 py-2 rounded-full text-sm font-bold tracking-wider transition-all duration-300 ${filter === 'favorites' ? 'bg-primary text-black shadow-[0_0_15px_rgba(57,255,20,0.4)]' : 'bg-surface text-textMuted border border-border hover:border-primary/50'}`}
+              >
+                FAVORITES
+              </button>
+            </div>
+            {matches.filter(m => filter === 'all' || favorites.includes(m.id)).length === 0 ? (
+              <div className="text-center text-textMuted mt-12 mb-12 p-12 border border-border border-dashed rounded-xl bg-surface/50">
+                No matches found in this category.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {matches.filter(m => filter === 'all' || favorites.includes(m.id)).map(match => (
               <div key={match.id} onClick={() => setSelectedMatchForChat(match)} className={selectedMatchForChat?.id === match.id ? "ring-2 ring-primary ring-offset-4 ring-offset-background rounded-xl transition" : ""}>
                  <MatchCard 
                   match={match} 
@@ -71,7 +92,9 @@ const MatchesPage = () => {
                  />
               </div>
             ))}
-          </div>
+              </div>
+            )}
+          </>
         )}
       </main>
 
